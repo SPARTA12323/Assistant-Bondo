@@ -1,1 +1,237 @@
-#Assistant_Bondo     
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Question Answering</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 420px;
+            width: 95vw;
+            margin: 40px auto;
+            background: rgba(255,255,255,0.97);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(42,77,105,0.18);
+            padding: 36px 28px 28px 28px;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #2575fc;
+            margin-bottom: 8px;
+            font-size: 2.1rem;
+            letter-spacing: 1px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #6a11cb;
+            margin-bottom: 28px;
+            font-size: 1.08rem;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 10px;
+        }
+        label {
+            color: #2a4d69;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        input, textarea {
+            padding: 13px 14px;
+            border-radius: 12px;
+            border: 1.5px solid #bfc9d1;
+            font-size: 1rem;
+            background: #f4f8fb;
+            transition: border 0.2s;
+        }
+        input:focus, textarea:focus {
+            border: 1.5px solid #2575fc;
+            outline: none;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        button {
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 13px;
+            font-size: 1.08rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(42,77,105,0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #2575fc 0%, #6a11cb 100%);
+            transform: translateY(-2px) scale(1.03);
+        }
+        .answer {
+            margin-top: 28px;
+            background: #eaf1fb;
+            border-left: 4px solid #2575fc;
+            padding: 18px 20px;
+            border-radius: 12px;
+            color: #2a4d69;
+            font-size: 1.13rem;
+            min-height: 40px;
+            box-shadow: 0 2px 8px rgba(42,77,105,0.06);
+        }
+        .loading {
+            color: #888;
+            font-style: italic;
+        }
+        .apikey {
+            margin-bottom: 18px;
+            text-align: center;
+            color: #888;
+            font-size: 0.98rem;
+        }
+        #planType {
+            font-size: 1em;
+            font-weight: 700;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px 2vw 16px 2vw;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Question Answering</h1>
+        <p class="subtitle">Ask any question and get an answer from AI!<br><span id="planType" style="font-size:0.95em;color:#376996;font-weight:600;">(Free Version)</span></p>
+        <div style="display:flex;justify-content:center;gap:16px;margin-bottom:18px;">
+            <button id="freeBtn" style="background:#2a4d69;">Free Version</button>
+            <button id="paidBtn" style="background:#f7b731;color:#2a4d69;">Paid Version</button>
+        </div>
+        <div class="apikey">
+            <label for="apiKey">Enter your API Key:</label><br>
+            <input type="password" id="apiKey" placeholder="API key..." style="width:80%;margin-top:8px;">
+        </div>
+        <form id="questionForm">
+            <label for="question">Your Question:</label>
+            <textarea id="question" name="question" required placeholder="Type your question here..."></textarea>
+            <button type="submit">Ask AI</button>
+        </form>
+        <div style="margin-top:22px;">
+            <div id="questionBox" style="display:none;margin-bottom:18px;background:#f4f8fb;border-left:4px solid #6a11cb;padding:14px 16px;border-radius:12px;color:#2a4d69;font-size:1.08rem;box-shadow:0 1px 4px rgba(42,77,105,0.06);">
+                <b>Your Question:</b>
+                <div id="questionText" style="margin-top:6px;"></div>
+            </div>
+            <div class="answer" id="answerBox"><b>AI Answer:</b><div id="answerText" style="margin-top:6px;"></div></div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:16px;margin-top:32px;">
+            <button id="payBtn" style="background:#27ae60;">Pay for Paid Version</button>
+            <button id="withdrawBtn" style="background:#eb3b5a;">Withdraw Money</button>
+        </div>
+    </div>
+    <!-- Payment/Withdraw Modal -->
+    <div id="modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:32px 24px;border-radius:12px;max-width:90vw;min-width:280px;box-shadow:0 4px 24px rgba(0,0,0,0.12);text-align:center;">
+            <div id="modalContent"></div>
+            <button onclick="document.getElementById('modal').style.display='none'" style="margin-top:18px;background:#2a4d69;">Close</button>
+        </div>
+    </div>
+    <script>
+        const form = document.getElementById('questionForm');
+        const answerBox = document.getElementById('answerBox');
+        const apiKeyInput = document.getElementById('apiKey');
+
+        // Demo: Free/Paid version switching
+        let isPaid = false;
+        const planType = document.getElementById('planType');
+        document.getElementById('freeBtn').onclick = function() {
+            isPaid = false;
+            planType.textContent = '(Free Version)';
+            planType.style.color = '#376996';
+        };
+        document.getElementById('paidBtn').onclick = function() {
+            isPaid = true;
+            planType.textContent = '(Paid Version)';
+            planType.style.color = '#f7b731';
+        };
+
+        // Demo: Payment/Withdraw modals
+        document.getElementById('payBtn').onclick = function() {
+            document.getElementById('modalContent').innerHTML = '<h2>Demo Payment</h2><p>This is a demo payment dialog. Integrate Stripe, PayPal, or another provider for real payments.</p><p><b>Paid version unlocks unlimited questions and priority answers.</b></p>';
+            document.getElementById('modal').style.display = 'flex';
+        };
+        document.getElementById('withdrawBtn').onclick = function() {
+            document.getElementById('modalContent').innerHTML = '<h2>Demo Withdraw</h2><p>This is a demo withdrawal dialog. Integrate a payment provider for real withdrawals.</p>';
+            document.getElementById('modal').style.display = 'flex';
+        };
+
+        const questionBox = document.getElementById('questionBox');
+        const questionText = document.getElementById('questionText');
+        const answerText = document.getElementById('answerText');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const question = document.getElementById('question').value.trim();
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                answerText.innerHTML = '<span style="color:red;">Please enter your OpenAI API key above.</span>';
+                questionBox.style.display = 'none';
+                return;
+            }
+            if (!question) return;
+            if (!isPaid && question.length > 120) {
+                answerText.innerHTML = '<span style="color:red;">Free version: Please ask a shorter question (max 120 characters).</span>';
+                questionBox.style.display = 'none';
+                return;
+            }
+            questionText.textContent = question;
+            questionBox.style.display = 'block';
+            answerText.innerHTML = '<span class="loading">AI is thinking...</span>';
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            { role: 'system', content: 'You are a helpful assistant for advice and problem solving.' },
+                            { role: 'user', content: question }
+                        ],
+                        max_tokens: isPaid ? 1024 : 256,
+                        temperature: 0.7
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('API error: ' + response.status);
+                }
+                const data = await response.json();
+                const aiAnswer = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content
+                    ? data.choices[0].message.content.trim()
+                    : 'No answer received.';
+                answerText.textContent = aiAnswer;
+            } catch (err) {
+                answerText.innerHTML = '<span style="color:red;">Error: ' + err.message + '</span>';
+            }
+        });
+    </script>
+</body>
+</html>
