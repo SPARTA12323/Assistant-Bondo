@@ -150,3 +150,270 @@ The frontend runs on [http://localhost:3000](http://localhost:3000) and the back
 ## Customization
 
 - You can easily style the app or expand with user authentication, chat history, etc.
+import React from 'react';
+import ChatBox from './components/ChatBox';
+import './App.css';
+
+function App() {
+  return (
+    <div className="app-bg">
+      <header className="header">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="AI Icon" className="logo"/>
+        <h2>AI Q&A Chat</h2>
+      </header>
+      <main className="main-container">
+        <ChatBox />
+      </main>
+      <footer className="footer">
+        &copy; {new Date().getFullYear()} SPARTA12323 &mdash; Powered by OpenAI
+      </footer>
+    </div>
+  );
+}
+
+export default App;
+import React, { useState } from 'react';
+import './ChatBox.css';
+
+const API_URL = 'http://localhost:5000/api/ask';
+
+function ChatBox() {
+  const [question, setQuestion] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const askAI = async () => {
+    if (!question.trim()) return;
+    const userMsg = { from: 'user', text: question };
+    setMessages([...messages, userMsg]);
+    setLoading(true);
+    setQuestion('');
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMsg.text }),
+      });
+      const data = await res.json();
+      setMessages(msgs => [
+        ...msgs,
+        { from: 'ai', text: data.answer || data.error || 'No response' }
+      ]);
+    } catch (e) {
+      setMessages(msgs => [
+        ...msgs,
+        { from: 'ai', text: 'Error connecting to AI service.' }
+      ]);
+    }
+    setLoading(false);
+  };
+
+  const handleKeyDown = e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      askAI();
+    }
+  };
+
+  return (
+    <div className="chatbox">
+      <div className="messages">
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            className={`bubble ${m.from === 'user' ? 'user' : 'ai'}`}
+          >
+            {m.text}
+          </div>
+        ))}
+        {loading && (
+          <div className="bubble ai">
+            <span className="loader"></span>
+            <span style={{marginLeft: 8}}>AI is thinking...</span>
+          </div>
+        )}
+      </div>
+      <form className="input-area" onSubmit={e => { e.preventDefault(); askAI(); }}>
+        <textarea
+          rows={2}
+          value={question}
+          onChange={e => setQuestion(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask a question..."
+          disabled={loading}
+        />
+        <button type="submit" disabled={loading || !question.trim()}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export default ChatBox;
+@import url('https://fonts.googleapis.com/css?family=Inter:400,700&display=swap');
+
+.app-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f6f7fb 0%, #e9effd 100%);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #3157d5;
+  color: #fff;
+  padding: 22px 0 18px 0;
+  justify-content: center;
+  box-shadow: 0 2px 8px 0 rgba(49,87,213,0.07);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.logo {
+  width: 38px;
+  height: 38px;
+}
+
+.main-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 28px 8px 18px 8px;
+}
+
+.footer {
+  text-align: center;
+  padding: 12px 0 8px 0;
+  color: #6c7a9c;
+  background: none;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.chatbox {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 32px 0 rgba(49,87,213,0.09);
+  width: 100%;
+  max-width: 510px;
+  padding: 0 0 10px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages {
+  flex: 1;
+  min-height: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 18px 12px 18px;
+}
+
+.bubble {
+  display: inline-block;
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 2px;
+  animation: fadeIn 0.4s;
+  word-break: break-word;
+}
+
+.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #3157d5 85%, #5a8fff 100%);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.ai {
+  align-self: flex-start;
+  background: #f2f4fa;
+  color: #2e3756;
+  border-bottom-left-radius: 4px;
+}
+
+.input-area {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  border-top: 1px solid #f0f2fa;
+  padding: 14px 18px 0 18px;
+  background: none;
+}
+
+.input-area textarea {
+  flex: 1;
+  resize: none;
+  border: 1.5px solid #d4def8;
+  border-radius: 8px;
+  font-size: 16px;
+  padding: 10px;
+  font-family: inherit;
+  margin-bottom: 0;
+  outline: none;
+  transition: border-color 0.18s;
+  min-height: 40px;
+  background: #f7faff;
+}
+
+.input-area textarea:focus {
+  border-color: #3157d5;
+}
+
+.input-area button {
+  background: #3157d5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s;
+}
+
+.input-area button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Loader Spinner */
+.loader,
+.loader:before,
+.loader:after {
+  border-radius: 50%;
+}
+.loader {
+  color: #3157d5;
+  font-size: 10px;
+  text-indent: -9999em;
+  margin: 0 6px 0 0;
+  position: relative;
+  width: 18px;
+  height: 18px;
+  box-shadow: inset 0 0 0 2px;
+  transform: translateZ(0);
+  animation: load6 1.1s infinite linear;
+  display: inline-block;
+}
+@keyframes load6 {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
