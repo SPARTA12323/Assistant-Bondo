@@ -675,6 +675,7 @@ export default ChatBox;
   display: flex;
   align-items: center;
   gap: 14px;
+  
   background: #101015;
   color: #fff;
   padding: 22px 0 18px 0;
@@ -828,3 +829,104 @@ export default ChatBox;
   0% { transform: rotate(0deg);}
   100% { transform: rotate(360deg);}
 }
+import React from 'react';
+import ChatBox from './components/ChatBox';
+import './App.css';
+
+function App() {
+  return (
+    <div className="app-bg">
+      <header className="header">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="AI Icon" className="logo"/>
+        <h2>AI Q&A Chat</h2>
+      </header>
+      <main className="main-container">
+        <ChatBox />
+      </main>
+      <footer className="footer">
+        &copy; {new Date().getFullYear()} SPARTA12323 &mdash; Powered by OpenAI
+      </footer>
+    </div>
+  );
+}
+
+export default App;
+import React, { useState } from 'react';
+import './ChatBox.css';
+
+const API_URL = 'http://localhost:5000/api/ask';
+
+function ChatBox() {
+  const [question, setQuestion] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const askAI = async () => {
+    if (!question.trim()) return;
+    const userMsg = { from: 'user', text: question };
+    setMessages([...messages, userMsg]);
+    setLoading(true);
+    setQuestion('');
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMsg.text }),
+      });
+      const data = await res.json();
+      setMessages(msgs => [
+        ...msgs,
+        { from: 'ai', text: data.answer || data.error || 'No response' }
+      ]);
+    } catch (e) {
+      setMessages(msgs => [
+        ...msgs,
+        { from: 'ai', text: 'Error connecting to AI service.' }
+      ]);
+    }
+    setLoading(false);
+  };
+
+  const handleKeyDown = e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      askAI();
+    }
+  };
+
+  return (
+    <div className="chatbox">
+      <div className="messages">
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            className={`bubble ${m.from === 'user' ? 'user' : 'ai'}`}
+          >
+            {m.text}
+          </div>
+        ))}
+        {loading && (
+          <div className="bubble ai">
+            <span className="loader"></span>
+            <span style={{marginLeft: 8}}>AI is thinking...</span>
+          </div>
+        )}
+      </div>
+      <form className="input-area" onSubmit={e => { e.preventDefault(); askAI(); }}>
+        <textarea
+          rows={2}
+          value={question}
+          onChange={e => setQuestion(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask a question..."
+          disabled={loading}
+        />
+        <button type="submit" disabled={loading || !question.trim()}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export default ChatBox;
